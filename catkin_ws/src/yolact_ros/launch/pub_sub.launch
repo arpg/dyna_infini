@@ -1,0 +1,11 @@
+<launch>
+    <param name="trained_model" type="string" value="/mnt/shared/catkin_ws/src/yolact_ros/weights/yolact_base_54_800000.pth" />
+    <param name="top_k" type="int" value="15" />
+    <param name="score_threshold" type="double" value="0.12" />
+    <param name="sub_topic" type="string" value="/gray_image0" />
+    <param name="pub_topic" type="string" value="/image_seg0" />
+    <!-- currently only support detect "persons" or "all" objects-->
+    <param name="detect_objects" type="string" value="persons" />
+    <node type="eval_sub_pub_image.py" pkg="yolact_ros" name="eval_sub_pub_image" output="screen">
+    </node>
+</launch>

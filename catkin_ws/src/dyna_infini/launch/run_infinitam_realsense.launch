@@ -1,0 +1,14 @@
+<launch>
+    <param name="name" value="ekfslam_bayesopt"/>
+    <param name="use_external_pose_estimation" type="bool" value="True" />
+    <param name="dynamic_objects" type="bool" value="True" />
+    <param name="external_pose_topic" type="str" value="/orbslam3/odom" />
+    <!-- <param name="external_pose_topic" type="str" value="/vins_estimator/camera_pose_geo" /> -->
+    <param name="depth_scale" type="double" value="1000.0" />
+    <param name="calib_address" type="str" value="/opt/dataset/calib_infinitam.txt" />
+    <param name="rgb_image_topic" type="str" value="/gray_image0" />
+    <param name="depth_image_topic" type="str" value="/depth" />
+    <param name="mask_image_topic" type="str" value="/image_seg0" />
+    <node name="infinitam" pkg = "infinitam" type = "InfiniTAM" output="screen">
+    </node>
+</launch>
