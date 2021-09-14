@@ -1,0 +1,43 @@
+<launch>
+    <arg name="cam0" default="/gray_image0"/>
+    <arg name="cam1" default="/gray_image1"/>
+    <arg name="imu0" default="/gx5/imu/data"/>
+    <arg name="seg0" default="/image_seg0"/>
+    <arg name="depth" default="/depth"/>
+
+    <!-- Inifnitam Dynsmic-->
+    <param name="name" value="ekfslam_bayesopt"/>
+    <param name="use_external_pose_estimation" type="bool" value="True" />
+    <param name="dynamic_objects" type="bool" value="True" />
+    <param name="external_pose_topic" type="str" value="/orbslam3/odom" />
+    <!-- <param name="external_pose_topic" type="str" value="/vins_estimator/camera_pose_geo" /> -->
+    <param name="depth_scale" type="double" value="1000.0" />
+    <param name="calib_address" type="str" value="/opt/dataset/tum/calib_infinitam_tum.txt" />
+    <param name="rgb_image_topic" type="str" value="$(arg cam0)" />
+    <param name="depth_image_topic" type="str" value="$(arg depth)" />
+    <param name="mask_image_topic" type="str" value="$(arg seg0)" />
+    <node name="infinitam" pkg = "dyna_infini" type = "InfiniTAM" output="screen">
+    </node>
+
+    <!-- ORBSLAM3  ROS-->
+    <param name="ORBvoc_address" type="string" value="$(find orbslam3)/Vocabulary/ORBvoc.txt" />
+    <param name="yaml_address" type="string" value="$(find orbslam3)/Examples/RGB-D/TUM3_ros.yaml" />
+    <param name="show_orbslam_UI" type="bool" value="false" />
+    
+    <param name="rgb_image_topic" type="string" value="$(arg cam0)" />
+    <param name="depth_image_topic" type="string" value="$(arg depth)" />
+    <param name="im_left_mask_topic" type="string" value="$(arg seg0)" />
+    <node type="ros_rgbd_remove_mask" pkg="orbslam3" name="ros_rgbd_remove_mask" output="screen">
+    </node>
+
+    <!-- Yolact  ROS-->
+    <param name="trained_model" type="string" value="$(find yolact_ros)/weights/yolact_base_54_800000.pth" />
+    <param name="top_k" type="int" value="15" />
+    <param name="score_threshold" type="double" value="0.12" />
+    <param name="sub_topic" type="string" value="$(arg cam0)" />
+    <param name="pub_topic" type="string" value="$(arg seg0)" />
+    <!-- currently only support detect "persons" or "all" objects-->
+    <param name="detect_objects" type="string" value="persons" />
+    <node type="eval_sub_pub_image.py" pkg="yolact_ros" name="yolact_ros_node" output="screen">
+    </node>
+</launch>

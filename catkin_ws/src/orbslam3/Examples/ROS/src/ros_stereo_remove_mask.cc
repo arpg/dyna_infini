@@ -64,7 +64,7 @@ public:
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "RGBD");
+    ros::init(argc, argv, "stereo_mask_remove");
     ros::start();
 
     ros::NodeHandle nh;
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
     ImageGrabber igb(&SLAM,nh);
 
-    do_rectification = do_rectification;
+    igb.do_rectify = do_rectification;
 
     if(igb.do_rectify)
     {      

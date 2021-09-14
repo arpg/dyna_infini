@@ -56,30 +56,80 @@ public:
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "RGBD");
+    ros::init(argc, argv, "stereo_mask_remove");
     ros::start();
-
-    if(argc != 4)
-    {
-        cerr << endl << "Usage: rosrun ORB_SLAM3 Stereo path_to_vocabulary path_to_settings do_rectify" << endl;
-        ros::shutdown();
-        return 1;
-    }    
-
-    // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::STEREO,true);
 
     ros::NodeHandle nh;
 
+    std::string ORBvoc_address, yaml_address, im_left_topic, im_right_topic, im_left_mask_topic;
+    bool do_rectification = false, show_orbslam_UI = false;
+
+    if(nh.getParam("ORBvoc_address",ORBvoc_address)){
+        ROS_INFO("get ros vocabulary address %s", ORBvoc_address.c_str());
+    }
+    else{
+        ROS_ERROR("no vocabulary address, ERROR!");
+        ros::shutdown();
+    }
+
+    if(nh.getParam("yaml_address",yaml_address)){
+        ROS_INFO("get sensor setting address %s", yaml_address.c_str());
+    }
+    else{
+        ROS_ERROR("no sensor configuration address, ERROR!");
+        ros::shutdown();
+    }
+
+    if(nh.getParam("im_left_topic",im_left_topic)){
+        ROS_INFO("left image topic %s", im_left_topic.c_str());
+    }
+    else{
+        im_left_topic = "/gray_image0";
+        ROS_WARN("no left image topic, default %s", im_left_topic.c_str());
+    }
+
+    if(nh.getParam("im_right_topic",im_right_topic)){
+        ROS_INFO("right image topic %s", im_right_topic.c_str());
+    }
+    else{
+        im_right_topic = "/gray_image1";
+        ROS_WARN("no right image topic, default %s", im_right_topic.c_str());
+    }
+
+    if(nh.getParam("im_left_mask_topic",im_left_mask_topic)){
+        ROS_INFO("left image topic %s", im_left_mask_topic.c_str());
+    }
+    else{
+        im_left_mask_topic = "/image_seg0";
+        ROS_WARN("no left image topic, default %s", im_left_mask_topic.c_str());
+    }
+
+    if(nh.getParam("do_rectification",do_rectification)){
+        ROS_INFO("Do rectification?  %d", do_rectification);
+    }
+    else{
+        ROS_WARN("Not set do rectification value default False");
+    }
+
+    if(nh.getParam("show_orbslam_UI",show_orbslam_UI)){
+        ROS_INFO("Show orbslam UI? %d", show_orbslam_UI);
+    }
+    else{
+        ROS_WARN("no show orbslam UI value, default False");
+    }  
+   
+
+    // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    ORB_SLAM3::System SLAM(ORBvoc_address,yaml_address,ORB_SLAM3::System::STEREO,show_orbslam_UI);
+
     ImageGrabber igb(&SLAM,nh);
 
-    stringstream ss(argv[3]);
-	ss >> boolalpha >> igb.do_rectify;
+    igb.do_rectify = do_rectification;
 
     if(igb.do_rectify)
     {      
         // Load settings related to stereo calibration
-        cv::FileStorage fsSettings(argv[2], cv::FileStorage::READ);
+        cv::FileStorage fsSettings(yaml_address, cv::FileStorage::READ);
         if(!fsSettings.isOpened())
         {
             cerr << "ERROR: Wrong path to settings" << endl;
@@ -115,9 +165,9 @@ int main(int argc, char **argv)
         cv::initUndistortRectifyMap(K_r,D_r,R_r,P_r.rowRange(0,3).colRange(0,3),cv::Size(cols_r,rows_r),CV_32F,igb.M1r,igb.M2r);
     }
 
-    message_filters::Subscriber<sensor_msgs::Image> left_sub(nh, "/gray_image0", 10);//
-    message_filters::Subscriber<sensor_msgs::Image> right_sub(nh, "/gray_image1", 10);//
-    message_filters::Subscriber<sensor_msgs::Image> mask_sub(nh, "/image_seg0", 10);
+    message_filters::Subscriber<sensor_msgs::Image> left_sub(nh, im_left_topic, 10);//
+    message_filters::Subscriber<sensor_msgs::Image> right_sub(nh, im_right_topic, 10);//
+    message_filters::Subscriber<sensor_msgs::Image> mask_sub(nh, im_left_mask_topic, 10);
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), left_sub,right_sub,mask_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabStereo,&igb,_1,_2,_3));

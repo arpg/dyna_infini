@@ -55,8 +55,8 @@ class RosImageSourceEngine : public BaseImageSourceEngine {
 
   std::thread *spin_thread_;
 
-  std::queue<cv_bridge::CvImagePtr> rgb_queue_;
-  std::queue<cv_bridge::CvImagePtr> depth_queue_;
+  //std::queue<cv_bridge::CvImagePtr> rgb_queue_;
+  //std::queue<cv_bridge::CvImagePtr> depth_queue_;
   std::queue<cv_bridge::CvImagePtr> mask_queue_;
   std::queue<std::pair<cv_bridge::CvImagePtr, cv_bridge::CvImagePtr> > rgb_depth_pair_queue_;
 

@@ -43,23 +43,53 @@ public:
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "Mono");
+    ros::init(argc, argv, "rgbd_remove_mask");
     ros::start();
 
-    if(argc != 3)
-    {
-        cerr << endl << "Usage: rosrun ORB_SLAM3 Mono path_to_vocabulary path_to_settings" << endl;        
+    ros::NodeHandle nh;
+
+    std::string ORBvoc_address, yaml_address, image_topic, depth_image_topic, im_left_mask_topic;
+    bool do_rectification = false, show_orbslam_UI = false;
+
+    if(nh.getParam("ORBvoc_address",ORBvoc_address)){
+        ROS_INFO("get ros vocabulary address %s", ORBvoc_address.c_str());
+    }
+    else{
+        ROS_ERROR("no vocabulary address, ERROR!");
         ros::shutdown();
-        return 1;
-    }    
+    }
+
+    if(nh.getParam("yaml_address",yaml_address)){
+        ROS_INFO("get sensor setting address %s", yaml_address.c_str());
+    }
+    else{
+        ROS_ERROR("no sensor configuration address, ERROR!");
+        ros::shutdown();
+    }
+
+    if(nh.getParam("image_topic",image_topic)){
+        ROS_INFO("left image topic %s", image_topic.c_str());
+    }
+    else{
+        image_topic = "/gray_image0";
+        ROS_WARN("no rgb image topic, default %s", image_topic.c_str());
+    }
+
+
+    if(nh.getParam("show_orbslam_UI",show_orbslam_UI)){
+        ROS_INFO("Show orbslam UI? %d", show_orbslam_UI);
+    }
+    else{
+        ROS_WARN("no show orbslam UI value, default False");
+    }  
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::MONOCULAR,true);
+    ORB_SLAM3::System SLAM(ORBvoc_address,yaml_address,ORB_SLAM3::System::MONOCULAR,show_orbslam_UI);
 
     ImageGrabber igb(&SLAM);
 
     ros::NodeHandle nodeHandler;
-    ros::Subscriber sub = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage,&igb);
+    ros::Subscriber sub = nodeHandler.subscribe(image_topic, 1, &ImageGrabber::GrabImage,&igb);
 
     ros::spin();
 

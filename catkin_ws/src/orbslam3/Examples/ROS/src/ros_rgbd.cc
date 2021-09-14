@@ -57,25 +57,61 @@ public:
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "RGBD");
+    ros::init(argc, argv, "rgbd");
     ros::start();
-
-    if(argc != 3)
-    {
-        cerr << endl << "Usage: rosrun ORB_SLAM3 RGBD path_to_vocabulary path_to_settings" << endl;        
-        ros::shutdown();
-        return 1;
-    }    
-
-    // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::RGBD,true);//false: no viewer
 
     ros::NodeHandle nh;
 
+    std::string ORBvoc_address, yaml_address, rgb_image_topic, depth_image_topic;
+    bool do_rectification = false, show_orbslam_UI = false;
+
+    if(nh.getParam("ORBvoc_address",ORBvoc_address)){
+        ROS_INFO("get ros vocabulary address %s", ORBvoc_address.c_str());
+    }
+    else{
+        ROS_ERROR("no vocabulary address, ERROR!");
+        ros::shutdown();
+    }
+
+    if(nh.getParam("yaml_address",yaml_address)){
+        ROS_INFO("get sensor setting address %s", yaml_address.c_str());
+    }
+    else{
+        ROS_ERROR("no sensor configuration address, ERROR!");
+        ros::shutdown();
+    }
+
+    if(nh.getParam("rgb_image_topic",rgb_image_topic)){
+        ROS_INFO("left image topic %s", rgb_image_topic.c_str());
+    }
+    else{
+        rgb_image_topic = "/gray_image0";
+        ROS_WARN("no rgb image topic, default %s", rgb_image_topic.c_str());
+    }
+
+    if(nh.getParam("depth_image_topic",depth_image_topic)){
+        ROS_INFO("depth_image_topic image topic %s", depth_image_topic.c_str());
+    }
+    else{
+        depth_image_topic = "/depth";
+        ROS_WARN("no depth image topic, default %s", depth_image_topic.c_str());
+    }
+
+
+    if(nh.getParam("show_orbslam_UI",show_orbslam_UI)){
+        ROS_INFO("Show orbslam UI? %d", show_orbslam_UI);
+    }
+    else{
+        ROS_WARN("no show orbslam UI value, default False");
+    }  
+
+    // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    ORB_SLAM3::System SLAM(ORBvoc_address,yaml_address,ORB_SLAM3::System::RGBD,show_orbslam_UI);//false: no viewer
+
     ImageGrabber igb(&SLAM, nh);
 
-    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, "/rgb", 100);//"/camera/rgb/image_raw"
-    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, "/depth", 100);//"camera/depth_registered/image_raw"
+    message_filters::Subscriber<sensor_msgs::Image> rgb_sub(nh, rgb_image_topic, 100);//"/camera/rgb/image_raw"
+    message_filters::Subscriber<sensor_msgs::Image> depth_sub(nh, depth_image_topic, 100);//"camera/depth_registered/image_raw"
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), rgb_sub,depth_sub);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD,&igb,_1,_2));

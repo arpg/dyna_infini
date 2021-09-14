@@ -318,8 +318,8 @@ Examples/Stereo-Inertial/stereo_inertial_tum_vi.cc)
 target_link_libraries(stereo_inertial_tum_vi ${PROJECT_NAME})
 
 ##ADD orbslam lib
-add_executable(rgbd_remove_mask ${PROJECT_SOURCE_DIR}/Examples/ROS/src/ros_rgbd_remove_mask.cc)
-target_link_libraries(rgbd_remove_mask ${PROJECT_NAME} ${catkin_LIBRARIES})
+add_executable(ros_rgbd_remove_mask ${PROJECT_SOURCE_DIR}/Examples/ROS/src/ros_rgbd_remove_mask.cc)
+target_link_libraries(ros_rgbd_remove_mask ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(ros_stereo_remove_mask ${PROJECT_SOURCE_DIR}/Examples/ROS/src/ros_stereo_remove_mask.cc)
 target_link_libraries(ros_stereo_remove_mask ${PROJECT_NAME} ${catkin_LIBRARIES})

@@ -6,6 +6,6 @@
     <param name="pub_topic" type="string" value="/image_seg0" />
     <!-- currently only support detect "persons" or "all" objects-->
     <param name="detect_objects" type="string" value="persons" />
-    <node type="eval_sub_pub_image.py" pkg="yolact_ros" name="eval_sub_pub_image" output="screen">
+    <node type="eval_sub_pub_image.py" pkg="yolact_ros" name="yolact_ros_node" output="screen">
     </node>
 </launch>

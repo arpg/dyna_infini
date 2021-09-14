@@ -237,8 +237,9 @@ bool RosImageSourceEngine::ImagePairMatches(){
   if(dynamic_objects_) cv_mask_image_ = mask_queue_.front();
 
   //match the mask and the rgb first because the segmentation normally is later than the rgb
+  double time_im = cv_rgb_image_->header.stamp.toSec();
   if(dynamic_objects_){
-    double time_im = cv_rgb_image_->header.stamp.toSec();
+    
     double time_im_mask = cv_mask_image_->header.stamp.toSec();
 
     //cout<<"time is "<<std::setprecision(18)<<time_im_stereo<<","<<time_im_mask<<", difference "<<time_im_stereo-time_im_mask<<endl;
@@ -286,9 +287,12 @@ bool RosImageSourceEngine::ImagePairMatches(){
             ROS_WARN("Image is not well synchronized. The localization result may not be good");
         }
     }
-
-    timestamp_sec_ = time_im;
   }
+  else{
+    rgb_depth_pair_queue_.pop();
+  }
+
+  timestamp_sec_ = time_im;
 
   return true;
 }
@@ -296,11 +300,11 @@ bool RosImageSourceEngine::ImagePairMatches(){
 
 bool RosImageSourceEngine::hasMoreImages(void) const{
   if(dynamic_objects_){
-    if(depth_queue_.empty()|| rgb_queue_.empty() || mask_queue_.empty())
+    if(rgb_depth_pair_queue_.empty() || mask_queue_.empty())
       return false;
   }
   else{
-    if(depth_queue_.empty()|| rgb_queue_.empty())
+    if(rgb_depth_pair_queue_.empty())
       return false;    
   }
 
