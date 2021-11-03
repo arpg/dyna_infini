@@ -1,5 +1,5 @@
 exec docker run \
-     --name pytorch_test_container \
+     --name dyna_infini_container \
      --gpus all \
      --user=root \
      --rm \
