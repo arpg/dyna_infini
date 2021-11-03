@@ -28,7 +28,7 @@
     <param name="im_left_topic" type="string" value="$(arg cam0)" />
     <param name="im_right_topic" type="string" value="$(arg cam1)" />
     <param name="im_left_mask_topic" type="string" value="$(arg seg0)" />
-    <node type="ros_rgbd_remove_mask" pkg="orbslam3" name="ros_rgbd_remove_mask" output="screen">
+    <node type="ros_stereo_remove_mask" pkg="orbslam3" name="ros_stereo_remove_mask" output="screen">
     </node>
 
     <!-- Yolact  ROS-->
