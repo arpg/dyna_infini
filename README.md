@@ -7,7 +7,7 @@ We build this library on top of InfiniTAM, ORBSLAM3 and Yolact. We use Yolact to
 We play a ROS bag contains stereo and depth image obtained by Intel Realsense. We send the depth to the Yolact. Yolact produces the required segmented image and send it to the SLAM system and the InfiniTAM. SLAM system sends the pose edtimation to the infiniTAM with the depth image from the camera. Please refer the thesis for the detail implementation and system description.
 
 ## Install
-We **strongly** recommend you to build the library in the docker but you can still build it without docker. We have already build the docker image with all the dependencies in a seperate Ubuntu system. Install and run are pretty easy. However, the docker image size is large. 
+We **strongly** recommend you to build the library in the docker but you can still build it without docker. We have already build the docker image with all the dependencies in a seperate Ubuntu system. Install and run are pretty easy. However, the docker image size is large.  
 **With docker**, for GPU RTX 20X, GTX 10X and most of the GPU before 2020. Pull the image
 ```
 docker pull zhch5450/dynamic_3d_reconstruction_img:2
@@ -29,7 +29,7 @@ cd catkin_ws
 catkin_make
 ```
 **Without docker**  
-We try not to add new dependencies to this lib so you just need to download the dependencies of the sub systems.
+We try not to add new dependencies to this lib so you just need to download the dependencies of the sub systems.  
 https://github.com/dbolya/yolact  
 https://github.com/UZ-SLAMLab/ORB_SLAM3  
 https://github.com/victorprad/InfiniTAM  
