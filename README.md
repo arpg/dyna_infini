@@ -38,7 +38,9 @@ https://github.com/victorprad/InfiniTAM
 You don't need to install the `optional` dependencies shown in those libraries. Then  
 ```
 git clone https://github.com/arpg/dyna_infini.git
-cd dyna_infini
+cd dyna_infini/catkin_ws/src
+git clone https://github.com/arpg/orbslam3_ros.git
+cd ../../
 ./buid.sh
 ```
 ## Run
