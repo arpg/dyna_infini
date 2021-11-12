@@ -20,9 +20,10 @@ Then run the following for installation
 ```
 git clone https://github.com/arpg/dyna_infini.git
 cd dyna_infini/catkin_ws/src
-git clone https://github.com/arpg/orbslam3_ros.git
+git clone https://github.com/arpg/orbslam3.git
 cd ../../
 ./run_docker.sh
+cd ..
 ./buid.sh
 ```
 `run_docker.sh` brings you into the docker container, then in the container you run the `build.sh` script. `build.sh` builds some external libraries for ORBSLAM. In the future, if you make futher modifications to this lib, you simply need the following to rebuild in the docker container
@@ -30,7 +31,9 @@ cd ../../
 cd catkin_ws
 catkin_make
 ```
-**If you are using a Ubunu system and want to visualize the UI in the docker, remember to input command line `xhost +` in the **host machine** terminal.**    
+**If you are using a Ubunu system and want to visualize the UI in the docker, remember to input command line `xhost +` in the **host machine** terminal.**
+  
+      
 **Without docker**  
 We try not to add new dependencies to this lib so you just need to download the dependencies of the sub systems.  
 https://github.com/dbolya/yolact  
@@ -40,12 +43,12 @@ You don't need to install the `optional` dependencies shown in those libraries. 
 ```
 git clone https://github.com/arpg/dyna_infini.git
 cd dyna_infini/catkin_ws/src
-git clone https://github.com/arpg/orbslam3_ros.git
+git clone https://github.com/arpg/orbslam3.git
 cd ../../
 ./buid.sh
 ```
 ## Run
-Download the pretrained model or your own Yolact model at https://github.com/dbolya/yolact. Put the model into the `yolact_ros/wieghts` folder.
+Download the pretrained model or your own Yolact model at https://github.com/dbolya/yolact. Create a `weights` folder in the `yolact_ros` and put the model into the `yolact_ros/wieghts` folder.
 Download our example dataset ![here](https://drive.google.com/drive/folders/10FR_YndD6qXpdoKAvsAqOO6PvU_Ets22?usp=sharing). You can either put the data in your local machine or in the docker image. 
 If you **don't** want to handle the dynamic objects you can run the original IniniTAM. Open the `dyna_inifini/catkin_ws/src/dyna_infini/run_systems_realsense.launch`. Change the following value from `True` to `False`
 ```
