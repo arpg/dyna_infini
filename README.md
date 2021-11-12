@@ -19,7 +19,9 @@ docker pull zhch5450/dynamic_3d_reconstruction_img:1
 Then run the following for installation
 ```
 git clone https://github.com/arpg/dyna_infini.git
-cd dyna_infini
+cd dyna_infini/catkin_ws/src
+git clone https://github.com/arpg/orbslam3_ros.git
+cd ../../
 ./run_docker.sh
 ./buid.sh
 ```
