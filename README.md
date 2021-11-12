@@ -30,7 +30,7 @@ cd ../../
 cd catkin_ws
 catkin_make
 ```
-If you are using a Ubunu system and want to visualize the UI in the docker, remember to input command line `xhost +` in the **host machine** terminal.
+**If you are using a Ubunu system and want to visualize the UI in the docker, remember to input command line `xhost +` in the **host machine** terminal.**    
 **Without docker**  
 We try not to add new dependencies to this lib so you just need to download the dependencies of the sub systems.  
 https://github.com/dbolya/yolact  
