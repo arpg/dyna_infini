@@ -10,11 +10,11 @@ We play a ROS bag contains stereo and depth image obtained by Intel Realsense. W
 We **strongly** recommend you to build the library in the docker but you can still build it without docker. We have already build the docker image with all the dependencies in a seperate Ubuntu system. Install and run are pretty easy. However, the docker image size is large.  
 **With docker**, for GPU RTX 20X, GTX 10X and most of the GPU before 2020. Pull the image
 ```
-docker pull zhch5450/dynamic_3d_reconstruction_img:2
+docker pull zhch5450/dynamic_3d_reconstruction_img:1
 ```
 for new GPU like RTX 30x, pull the image
 ```
-docker pull zhch5450/dynamic_3d_reconstruction_img:1
+docker pull zhch5450/dynamic_3d_reconstruction_img:2
 ```
 Then run the following for installation
 ```
