@@ -58,6 +58,9 @@ ITMLibSettings::ITMLibSettings(void)
 					  "numiterC=20,numiterF=50,tukeyCutOff=8,"
 					  "framesToSkip=20,framesToWeight=50,failureDec=20.0";
 
+	//default we reconstruct everything
+	mask_out_ = false;
+
 	//// For hybrid intensity+depth tracking:
 	//trackerConfig = "type=extended,levels=bbb,useDepth=1,useColour=1,"
 	//				  "colourWeight=0.3,minstep=1e-4,"

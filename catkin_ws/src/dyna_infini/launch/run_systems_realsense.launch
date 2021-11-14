@@ -4,13 +4,15 @@
     <arg name="imu0" default="/gx5/imu/data"/>
     <arg name="seg0" default="/image_seg0"/>
     <arg name="depth" default="/depth"/>
+    <arg name="if_dynamics" default="True"/>
+    <arg name="if_external_pose" default="True" />
 
     <!-- Inifnitam Dynsmic-->
     <param name="name" value="ekfslam_bayesopt"/>
-    <param name="use_external_pose_estimation" type="bool" value="True" />
-    <param name="dynamic_objects" type="bool" value="True" />
+    <param name="use_external_pose_estimation" type="bool" value="$(arg if_external_pose)" />
+    <param name="dynamic_objects" type="bool" value="$(arg if_dynamics)" />
+    <param name="mask_out" type="bool" value="False" />
     <param name="external_pose_topic" type="str" value="/orbslam3/odom" />
-    <!-- <param name="external_pose_topic" type="str" value="/vins_estimator/camera_pose_geo" /> -->
     <param name="depth_scale" type="double" value="1000.0" />
     <param name="calib_address" type="str" value="/opt/dataset/realsense/calib_infinitam_realsense.txt" />
     <param name="rgb_image_topic" type="str" value="$(arg cam0)" />
@@ -20,25 +22,35 @@
     </node>
 
     <!-- ORBSLAM3  ROS-->
-    <param name="ORBvoc_address" type="string" value="$(find orbslam3)/Vocabulary/ORBvoc.txt" />
-    <param name="yaml_address" type="string" value="$(find orbslam3)/Examples/Stereo/arpg_realsense_stereo.yaml" />
-    <param name="do_rectification" type="bool" value="true" />
-    <param name="show_orbslam_UI" type="bool" value="false" />
-    
-    <param name="im_left_topic" type="string" value="$(arg cam0)" />
-    <param name="im_right_topic" type="string" value="$(arg cam1)" />
-    <param name="im_left_mask_topic" type="string" value="$(arg seg0)" />
-    <node type="ros_stereo_remove_mask" pkg="orbslam3" name="ros_stereo_remove_mask" output="screen">
-    </node>
+    <group if="$(arg if_external_pose)">
+        <param name="ORBvoc_address" type="string" value="$(find orbslam3)/Vocabulary/ORBvoc.txt" />
+        <param name="yaml_address" type="string" value="$(find orbslam3)/Examples/Stereo/arpg_realsense_stereo.yaml" />
+        <param name="do_rectification" type="bool" value="true" />
+        <param name="show_orbslam_UI" type="bool" value="false" />
+        
+        <param name="im_left_topic" type="string" value="$(arg cam0)" />
+        <param name="im_right_topic" type="string" value="$(arg cam1)" />
+        <param name="im_left_mask_topic" type="string" value="$(arg seg0)" />
+        <group if="$(arg if_dynamics)">
+            <node type="ros_stereo_remove_mask" pkg="orbslam3" name="ros_stereo_remove_mask" output="screen">
+            </node>
+        </group>
+        <group unless="$(arg if_dynamics)">
+            <node type="ros_stereo" pkg="orbslam3" name="ros_stereo" output="screen">
+            </node>
+        </group>        
+    </group>
 
     <!-- Yolact  ROS-->
-    <param name="trained_model" type="string" value="$(find yolact_ros)/weights/yolact_base_54_800000.pth" />
-    <param name="top_k" type="int" value="15" />
-    <param name="score_threshold" type="double" value="0.12" />
-    <param name="sub_topic" type="string" value="$(arg cam0)" />
-    <param name="pub_topic" type="string" value="$(arg seg0)" />
-    <!-- currently only support detect "persons" or "all" objects-->
-    <param name="detect_objects" type="string" value="persons" />
-    <node type="eval_sub_pub_image.py" pkg="yolact_ros" name="yolact_ros_node" output="screen">
-    </node>
+    <group if="$(arg if_dynamics)">
+        <param name="trained_model" type="string" value="$(find yolact_ros)/weights/yolact_base_54_800000.pth" />
+        <param name="top_k" type="int" value="15" />
+        <param name="score_threshold" type="double" value="0.12" />
+        <param name="sub_topic" type="string" value="$(arg cam0)" />
+        <param name="pub_topic" type="string" value="$(arg seg0)" />
+        <!-- currently only support detect "persons" or "all" objects-->
+        <param name="detect_objects" type="string" value="persons" />
+        <node type="eval_sub_pub_image.py" pkg="yolact_ros" name="yolact_ros_node" output="screen">
+        </node>
+    </group>
 </launch>

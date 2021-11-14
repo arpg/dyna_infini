@@ -251,13 +251,13 @@ bool RosImageSourceEngine::ImagePairMatches(){
         mask_queue_.pop();
     }
     else if(time_im - time_im_mask > th_mask){
-        ROS_INFO("rgb/gray pair is in front of the mask. Should not often happen");
+        ROS_INFO("rgb/gray pair is in front of the mask. Should not often happen. Will synchronize");
         while(time_im - time_im_mask > th_mask && !mask_queue_.empty()){
             mask_queue_.pop();
             if(!mask_queue_.empty())
                 cv_mask_image_ = mask_queue_.front();
             else{
-                ROS_WARN("Mask lags too much behind the stereo");
+                //ROS_WARN("Mask lags too much behind the stereo");
                 return false;                
             }
             time_im_mask = cv_mask_image_->header.stamp.toSec();
@@ -269,7 +269,7 @@ bool RosImageSourceEngine::ImagePairMatches(){
         }
     }
     else if(time_im_mask - time_im > th_mask){
-        ROS_INFO("mask is in front of the stereo pair");
+        //ROS_INFO("mask is in front of the stereo pair");
         while(time_im_mask - time_im > th_mask && !rgb_depth_pair_queue_.empty()){
             rgb_depth_pair_queue_.pop();
             if(!rgb_depth_pair_queue_.empty()){
@@ -277,7 +277,7 @@ bool RosImageSourceEngine::ImagePairMatches(){
               cv_depth_image_ = rgb_depth_pair_queue_.front().second;              
             }
             else{
-                ROS_WARN("RGB lags too much behind the mask");
+                //ROS_WARN("RGB lags too much behind the mask");
                 return false;                
             }
             time_im = cv_rgb_image_->header.stamp.toSec();;
@@ -287,6 +287,7 @@ bool RosImageSourceEngine::ImagePairMatches(){
             ROS_WARN("Image is not well synchronized. The localization result may not be good");
         }
     }
+
   }
   else{
     rgb_depth_pair_queue_.pop();

@@ -41,6 +41,10 @@ namespace ITMLib
 		virtual void IntegrateIntoScene(ITMScene<TVoxel,TIndex> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 			const ITMRenderState *renderState) = 0;
 
+		/** If we need to reconstruct the dynamic object. If mask out is true, we only reconstruct the static object. Not a pure virtual
+		*/
+		virtual void SetMaskOut(bool mask_out){}; 
+
 		ITMSceneReconstructionEngine(void) { }
 		virtual ~ITMSceneReconstructionEngine(void) { }
 	};

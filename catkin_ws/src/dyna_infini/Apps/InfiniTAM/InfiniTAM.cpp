@@ -201,6 +201,14 @@ try
 		ROS_INFO("Not providing if we need to consider dynamic objects. Default not.  \n");
 	}
 
+	bool mask_out = false;
+	if(nh.getParam("mask_out", mask_out)){
+		ROS_INFO("reconstruct the dynamic object ? %d \n", !mask_out);
+	}
+	else{
+		ROS_INFO("Not providing if we need to reconstruct the dynamic object, default we reconstruct everything. \n");
+	}
+
 	// int arg = 1;
 	// do {
 	// 	if (argv[arg] != NULL) arg1 = argv[arg]; else break;
@@ -246,6 +254,7 @@ try
 	}
 
 	ITMLibSettings *internalSettings = new ITMLibSettings();
+	internalSettings->mask_out_ = mask_out;
 
 	ITMMainEngine *mainEngine = NULL;
 	switch (internalSettings->libMode)

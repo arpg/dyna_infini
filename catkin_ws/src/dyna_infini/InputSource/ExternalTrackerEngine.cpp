@@ -58,6 +58,7 @@ bool ExternalTrackerEngine::GetNewSE3Pose(ORUtils::SE3Pose& pose_oru, double& ti
 
     pose_oru.SetM(invm);
     timestamp_sec = pose.header.stamp.toSec();
+
     return true;
 }
 

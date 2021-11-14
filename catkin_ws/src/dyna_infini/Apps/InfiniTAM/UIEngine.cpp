@@ -659,6 +659,7 @@ void UIEngine::ProcessFrame()
 	bool has_pose = true;
 	if(ExternalTracker != NULL){
 		has_pose = ExternalTracker->GetNewSE3Pose(current_camera_pose, pose_timestamp);
+		//printf("image, pose timestamp and timage - t pose, %f, %f, %f \n", camera_timestamp, pose_timestamp, camera_timestamp - pose_timestamp);
 		if(!has_pose)
 			return;
 		
@@ -688,8 +689,6 @@ void UIEngine::ProcessFrame()
 				return;				
 			}
 		}
-
-			
 	}
 
 	if (imuSource != NULL) {

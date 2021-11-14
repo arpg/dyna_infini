@@ -20,7 +20,7 @@ namespace
 template<class TVoxel, bool stopMaxW>
 __global__ void integrateIntoScene_device(TVoxel *localVBA, const ITMHashEntry *hashTable, int *noVisibleEntryIDs,
 	const Vector4u *rgb, Vector2i rgbImgSize, const float *depth, const float *confidence, Vector2i imgSize, const uchar* mask, Matrix4f M_d, Matrix4f M_rgb, Vector4f projParams_d, 
-	Vector4f projParams_rgb, float _voxelSize, float mu, int maxW);
+	Vector4f projParams_rgb, float _voxelSize, float mu, int maxW, bool mask_out);
 
 template<class TVoxel, bool stopMaxW>
 __global__ void integrateIntoScene_device(TVoxel *voxelArray, const ITMPlainVoxelArray::ITMVoxelArrayInfo *arrayInfo,
@@ -247,16 +247,21 @@ void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::IntegrateInto
 	if (scene->sceneParams->stopIntegratingAtMaxW)
 	{
 		integrateIntoScene_device<TVoxel, true> << <gridSize, cudaBlockSize >> >(localVBA, hashTable, visibleEntryIDs,
-			rgb, rgbImgSize, depth, confidence, depthImgSize, mask, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW);
+			rgb, rgbImgSize, depth, confidence, depthImgSize, mask, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW, mask_out_);
 		ORcudaKernelCheck;
 	}
 	else
 	{
 		//default integrate using this function
 		integrateIntoScene_device<TVoxel, false> << <gridSize, cudaBlockSize >> >(localVBA, hashTable, visibleEntryIDs,
-			rgb, rgbImgSize, depth, confidence, depthImgSize, mask, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW);
+			rgb, rgbImgSize, depth, confidence, depthImgSize, mask, M_d, M_rgb, projParams_d, projParams_rgb, voxelSize, mu, maxW, mask_out_);
 		ORcudaKernelCheck;
 	}
+}
+
+template<class TVoxel>
+void ITMSceneReconstructionEngine_CUDA<TVoxel, ITMVoxelBlockHash>::SetMaskOut(bool mask_out){
+	mask_out_ = mask_out;
 }
 
 // plain voxel array
@@ -361,7 +366,7 @@ __global__ void integrateIntoScene_device(TVoxel *voxelArray, const ITMPlainVoxe
 template<class TVoxel, bool stopMaxW>
 __global__ void integrateIntoScene_device(TVoxel *localVBA, const ITMHashEntry *hashTable, int *visibleEntryIDs,
 	const Vector4u *rgb, Vector2i rgbImgSize, const float *depth, const float *confidence, Vector2i depthImgSize, const uchar* mask, Matrix4f M_d, Matrix4f M_rgb, Vector4f projParams_d, 
-	Vector4f projParams_rgb, float _voxelSize, float mu, int maxW)
+	Vector4f projParams_rgb, float _voxelSize, float mu, int maxW, bool mask_out)
 {
 	Vector3i globalPos;
 	int entryId = visibleEntryIDs[blockIdx.x];
@@ -419,7 +424,7 @@ __global__ void integrateIntoScene_device(TVoxel *localVBA, const ITMHashEntry *
 
 	//normally we dont have confidence information
 	ComputeUpdatedVoxelInfo<TVoxel::hasColorInformation, TVoxel::hasConfidenceInformation, TVoxel>::compute(localVoxelBlock[locId], 
-		pt_model, M_d, projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence, depthImgSize, rgb, rgbImgSize, mask);
+		pt_model, M_d, projParams_d, M_rgb, projParams_rgb, mu, maxW, depth, confidence, depthImgSize, rgb, rgbImgSize, mask, mask_out);
 
 	// if(entryId >= 90 && entryId <= 100 && locId>250 && locId < 300){
 	// 	printf("1111 current hash entry position, %d, %d, %d. And entryID and  localId %d, %d. voxel sdf, weight %d, %d \n", currentHashEntry.pos.x, currentHashEntry.pos.y, currentHashEntry.pos.z, entryId, locId, localVoxelBlock[locId].sdf, localVoxelBlock[locId].w_depth);

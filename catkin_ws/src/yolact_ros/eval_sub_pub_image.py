@@ -97,7 +97,7 @@ class ProcessImage:
         sub_topic = rospy.get_param("sub_topic", "/gray_image")
         pub_topic = rospy.get_param("pub_topic", "/image_seg")
         self.image_sub = rospy.Subscriber(sub_topic,numpy_msg(Image),self.ImageCallback)
-        self.image_pub = rospy.Publisher(pub_topic,Image, queue_size=10)
+        self.image_pub = rospy.Publisher(pub_topic,Image, queue_size=100)
 
         self.detection = rospy.get_param("detect_objects", "all")
 
@@ -106,7 +106,7 @@ class ProcessImage:
         self.timeq = Queue()
 
     def ImageCallback(self,data):
-        print("receive images....... ")
+        #print("receive images....... ")
         
         im = np.frombuffer(data.data, dtype=np.uint8).reshape(data.height, data.width,-1)
         self.imq.put(im)

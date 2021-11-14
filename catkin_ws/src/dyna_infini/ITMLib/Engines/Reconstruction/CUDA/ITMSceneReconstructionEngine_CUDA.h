@@ -19,6 +19,7 @@ namespace ITMLib
 		void *allocationTempData_host;
 		unsigned char *entriesAllocType_device;
 		Vector4s *blockCoords_device;
+		bool mask_out_ = false;
 
 	public:
 		void ResetScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene);
@@ -28,6 +29,8 @@ namespace ITMLib
 
 		void IntegrateIntoScene(ITMScene<TVoxel, ITMVoxelBlockHash> *scene, const ITMView *view, const ITMTrackingState *trackingState,
 			const ITMRenderState *renderState);
+
+		void SetMaskOut(bool mask_out);
 
 		ITMSceneReconstructionEngine_CUDA(void);
 		~ITMSceneReconstructionEngine_CUDA(void);

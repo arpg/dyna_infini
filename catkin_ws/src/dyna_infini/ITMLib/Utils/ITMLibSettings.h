@@ -68,6 +68,9 @@ namespace ITMLib
 		ITMLibSettings(const ITMLibSettings&);
 		ITMLibSettings& operator=(const ITMLibSettings&);
 
+		//If we want to reconstruct the dynamic object
+		bool mask_out_;
+
 		MemoryDeviceType GetMemoryType() const;
 	};
 }

@@ -7,7 +7,7 @@
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &voxel, const THREADPTR(Vector4f) & pt_model, const CONSTPTR(Matrix4f) & M_d,
-	const CONSTPTR(Vector4f) & projParams_d, float mu, int maxW, const CONSTPTR(float) *depth, const CONSTPTR(Vector2i) & imgSize,  const CONSTPTR(uchar) *mask = NULL)
+	const CONSTPTR(Vector4f) & projParams_d, float mu, int maxW, const CONSTPTR(float) *depth, const CONSTPTR(Vector2i) & imgSize, const CONSTPTR(uchar) *mask = NULL, bool mask_out = false)
 {
 	Vector4f pt_camera; Vector2f pt_image;
 	float depth_measure, eta, oldF, newF;
@@ -55,82 +55,62 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 		voxel.w_depth = newW;
 	}
 	else{
-		//printf("we have mask ....................................... ");
 		newF = MIN(1.0f, eta / mu);
 		newW = 1;
 
 		bool in_mask = (mask[pt_col + pt_row * imgSize.x] == 255);
 
-		// if(!in_mask){
-		// 	int range = 16;
-		// 	//only check four corners, much faster
-		// 	int i, j;
-		// 	i = pt_row - range; j = pt_col - range;
-		// 	if((j > 1) && (j <= imgSize.x - 2) && (i > 1) && (i <= imgSize.y - 2))
-		// 		if(mask[j + i * imgSize.x] == 255) in_mask = true;
-		// 	i = pt_row + range; j = pt_col - range;
-		// 	if((j > 1) && (j <= imgSize.x - 2) && (i > 1) && (i <= imgSize.y - 2))
-		// 		if(mask[j + i * imgSize.x] == 255) in_mask = true;
-		// 	i = pt_row - range; j = pt_col + range;
-		// 	if((j > 1) && (j <= imgSize.x - 2) && (i > 1) && (i <= imgSize.y - 2))
-		// 		if(mask[j + i * imgSize.x] == 255) in_mask = true;
-		// 	i = pt_row + range; j = pt_col + range;
-		// 	if((j > 1) && (j <= imgSize.x - 2) && (i > 1) && (i <= imgSize.y - 2))
-		// 		if(mask[j + i * imgSize.x] == 255) in_mask = true;
+		//mask_out = true, only reconstruct static scene; else, reconstruct everything
+		if(mask_out){
+			if(!in_mask){
+				int range = 12;
+				//only check four corners, much faster
+				int i, j;
+				i = pt_row - range; j = pt_col - range;
+				if((j > 1) && (j <= imgSize.x - 2) && (i > 1) && (i <= imgSize.y - 2))
+					if(mask[j + i * imgSize.x] == 255) in_mask = true;
+				i = pt_row + range; j = pt_col - range;
+				if((j > 1) && (j <= imgSize.x - 2) && (i > 1) && (i <= imgSize.y - 2))
+					if(mask[j + i * imgSize.x] == 255) in_mask = true;
+				i = pt_row - range; j = pt_col + range;
+				if((j > 1) && (j <= imgSize.x - 2) && (i > 1) && (i <= imgSize.y - 2))
+					if(mask[j + i * imgSize.x] == 255) in_mask = true;
+				i = pt_row + range; j = pt_col + range;
+				if((j > 1) && (j <= imgSize.x - 2) && (i > 1) && (i <= imgSize.y - 2))
+					if(mask[j + i * imgSize.x] == 255) in_mask = true;
 
-		// 	//check a square
-		// 	// for(int i = pt_row - range; i <= pt_row + range; i++){
-		// 	// 	for(int j = pt_col - range; j <= pt_col + range; j++){
-		// 	// 		if((j < 1) || (j > imgSize.x - 2) || (i < 1) || (i > imgSize.y - 2)) continue;
-		// 	// 		else if(mask[j + i * imgSize.x] == 255) {in_mask = true; break;}
-		// 	// 	}
-		// 	// }
-		// }
-		// if(in_mask){
-		// 	printf("new f and old f, %f, %f...................................", newF, oldF);
-		// }
 
-		float th = 0.1;
-
-		// if(in_mask){
-		// 	newF = TVoxel::valueToFloat(32767);
-		// 	newW = 1;
-		// }
-		// else{
-		// 	newF = oldW * oldF + newW * newF;
-		// 	newW = oldW + newW;
-		// 	newF /= newW;
-		// 	newW = MIN(newW, maxW);				
-		// }
-		
-		// if(!in_mask && voxel.dyna_updated_){
-		// 	newF = TVoxel::valueToFloat(32767);
-		// 	newW = 1;
-		// }
-		// else if(!in_mask && !voxel.dyna_updated_){
-		// 	newF = oldW * oldF + newW * newF;
-		// 	newW = oldW + newW;
-		// 	newF /= newW;
-		// 	newW = MIN(newW, maxW);
-		// }
-
-		
-		if(abs(newF - oldF)<th || (!in_mask && !voxel.dyna_updated_)){
-			//if smaller than threshod, we update normally no matter it is in mask or not, dynamic or not
-			newF = oldW * oldF + newW * newF;
-			newW = oldW + newW;
-			newF /= newW;
-			newW = MIN(newW, maxW);
+				if(in_mask){
+					newF = TVoxel::valueToFloat(32767);
+					newW = 1;
+				}
+				else{
+					newF = oldW * oldF + newW * newF;
+					newW = oldW + newW;
+					newF /= newW;
+					newW = MIN(newW, maxW);				
+				}
+			}
 		}
-		else if(abs(newF - oldF)>=th && !in_mask && voxel.dyna_updated_){
-			//if larger than threshod, now not in mask but previsouly in mask, it means the object leaves, we reinitialize the voxel
-			newF = voxel.prev_sdf_; //TVoxel::valueToFloat(32767);
-			newW = voxel.prev_w_depth_;
-		}
-		else if(abs(newF - oldF)>=th && in_mask && !voxel.dyna_updated_){
-			//if larger than threshod, now in mask, previously not in mask, we store the current value as a static sdf value, which may be used to recover later.
-			voxel.prev_sdf_ = voxel.sdf;
-			voxel.prev_w_depth_ = voxel.w_depth;
+		else{
+			float th = 0.1;
+			if(abs(newF - oldF)<th || (!in_mask && !voxel.dyna_updated_)){
+				//if smaller than threshod, we update normally no matter it is in mask or not, dynamic or not
+				newF = oldW * oldF + newW * newF;
+				newW = oldW + newW;
+				newF /= newW;
+				newW = MIN(newW, maxW);
+			}
+			else if(abs(newF - oldF)>=th && !in_mask && voxel.dyna_updated_){
+				//if larger than threshod, now not in mask but previsouly in mask, it means the object leaves, we reinitialize the voxel
+				newF = voxel.prev_sdf_; //TVoxel::valueToFloat(32767);
+				newW = voxel.prev_w_depth_;
+			}
+			else if(abs(newF - oldF)>=th && in_mask && !voxel.dyna_updated_){
+				//if larger than threshod, now in mask, previously not in mask, we store the current value as a static sdf value, which may be used to recover later.
+				voxel.prev_sdf_ = voxel.sdf;
+				voxel.prev_w_depth_ = voxel.w_depth;
+			}
 		}
 
 		voxel.dyna_updated_ = in_mask;	
@@ -150,7 +130,7 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &voxel, const THREADPTR(Vector4f) & pt_model, const CONSTPTR(Matrix4f) & M_d,
-	const CONSTPTR(Vector4f) & projParams_d, float mu, int maxW, const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize, const CONSTPTR(uchar) *mask = NULL)
+	const CONSTPTR(Vector4f) & projParams_d, float mu, int maxW, const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize, const CONSTPTR(uchar) *mask = NULL, bool mask_out = false)
 {
 	Vector4f pt_camera; Vector2f pt_image;
 	float depth_measure, eta, oldF, newF;
@@ -192,7 +172,7 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 template<class TVoxel>
 _CPU_AND_GPU_CODE_ inline void computeUpdatedVoxelColorInfo(DEVICEPTR(TVoxel) &voxel, const THREADPTR(Vector4f) & pt_model, const CONSTPTR(Matrix4f) & M_rgb,
-	const CONSTPTR(Vector4f) & projParams_rgb, float mu, uchar maxW, float eta, const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize)
+	const CONSTPTR(Vector4f) & projParams_rgb, float mu, uchar maxW, float eta, const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize, bool mask_out = false)
 {
 	Vector4f pt_camera; Vector2f pt_image;
 	Vector3f rgb_measure, oldC, newC; Vector3u buffV3u;
@@ -234,9 +214,9 @@ struct ComputeUpdatedVoxelInfo<false, false, TVoxel> {
 		const CONSTPTR(Matrix4f) & M_rgb, const CONSTPTR(Vector4f) & projParams_rgb,
 		float mu, int maxW,
 		const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,
-		const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize_rgb, const CONSTPTR(uchar) *mask = NULL)
+		const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize_rgb, const CONSTPTR(uchar) *mask = NULL, bool mask_out = false)
 	{
-		computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d, mask);
+		computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d, mask, mask_out);
 	}
 };
 
@@ -249,11 +229,11 @@ struct ComputeUpdatedVoxelInfo<true, false, TVoxel> {
 		const THREADPTR(Matrix4f) & M_rgb, const THREADPTR(Vector4f) & projParams_rgb,
 		float mu, int maxW,
 		const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,
-		const CONSTPTR(Vector4u) *rgb, const THREADPTR(Vector2i) & imgSize_rgb, const CONSTPTR(uchar) *mask = NULL)
+		const CONSTPTR(Vector4u) *rgb, const THREADPTR(Vector2i) & imgSize_rgb, const CONSTPTR(uchar) *mask = NULL, bool mask_out = false)
 	{
-		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d, mask);
+		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, imgSize_d, mask, mask_out);
 		if ((eta > mu) || (fabs(eta / mu) > 0.25f)) return;
-		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
+		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb, mask_out);
 	}
 };
 
@@ -264,9 +244,9 @@ struct ComputeUpdatedVoxelInfo<false, true, TVoxel> {
 		const CONSTPTR(Matrix4f) & M_rgb, const CONSTPTR(Vector4f) & projParams_rgb,
 		float mu, int maxW,
 		const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,
-		const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize_rgb, const CONSTPTR(uchar) *mask = NULL)
+		const CONSTPTR(Vector4u) *rgb, const CONSTPTR(Vector2i) & imgSize_rgb, const CONSTPTR(uchar) *mask = NULL, bool mask_out = false)
 	{
-		computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d, mask);
+		computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d, mask, mask_out);
 	}
 };
 
@@ -277,11 +257,11 @@ struct ComputeUpdatedVoxelInfo<true, true, TVoxel> {
 		const THREADPTR(Matrix4f) & M_rgb, const THREADPTR(Vector4f) & projParams_rgb,
 		float mu, int maxW,
 		const CONSTPTR(float) *depth, const CONSTPTR(float) *confidence, const CONSTPTR(Vector2i) & imgSize_d,
-		const CONSTPTR(Vector4u) *rgb, const THREADPTR(Vector2i) & imgSize_rgb, const CONSTPTR(uchar) *mask = NULL)
+		const CONSTPTR(Vector4u) *rgb, const THREADPTR(Vector2i) & imgSize_rgb, const CONSTPTR(uchar) *mask = NULL, bool mask_out = false)
 	{
-		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d, mask);
+		float eta = computeUpdatedVoxelDepthInfo(voxel, pt_model, M_d, projParams_d, mu, maxW, depth, confidence, imgSize_d, mask, mask_out);
 		if ((eta > mu) || (fabs(eta / mu) > 0.25f)) return;
-		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb);
+		computeUpdatedVoxelColorInfo(voxel, pt_model, M_rgb, projParams_rgb, mu, maxW, eta, rgb, imgSize_rgb, mask_out);
 	}
 };
 
