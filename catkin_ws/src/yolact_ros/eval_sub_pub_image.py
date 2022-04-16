@@ -177,7 +177,7 @@ class ProcessImage:
                 # Masks are drawn on the GPU, so don't copy
                 masks = t[3][idx]
 
-            #if classes[j] = 0 then it is a person
+            #if classes[j] = 0 then it is a person, classes[j] = 1 then it is a car
             classes, scores, boxes = [x[idx].cpu().detach().numpy() for x in t[:3]]
 
         num_dets_to_consider = min(args.top_k, classes.shape[0])
@@ -195,7 +195,7 @@ class ProcessImage:
 
             if self.detection == "persons":
                 for j in range(num_dets_to_consider):
-                    if classes[j] == 0:
+                    if classes[j] == 0 or classes[j] == 2:
                         indices_persons.append(j)
                 masks = masks[indices_persons,:,:,None]
             elif self.detection == "all": 

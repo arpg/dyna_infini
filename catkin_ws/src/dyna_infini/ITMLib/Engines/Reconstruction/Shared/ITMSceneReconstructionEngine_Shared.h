@@ -42,6 +42,8 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 	//There is no mask, we dont consider the dynamic objects
 	//if we have mask, we try to detect dynamic obejcts
 	if(mask == NULL){
+		float th0 = 0.3;
+
 		newF = MIN(1.0f, eta / mu);
 		newW = 1;
 
@@ -49,10 +51,13 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 		newW = oldW + newW;
 		newF /= newW;
 		newW = MIN(newW, maxW);
+	
 		
 		//write back
 		voxel.sdf = TVoxel::floatToValue(newF);
 		voxel.w_depth = newW;
+
+		
 	}
 	else{
 		newF = MIN(1.0f, eta / mu);
@@ -91,22 +96,34 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 					newW = MIN(newW, maxW);				
 				}
 			}
+			else{
+				newF = TVoxel::valueToFloat(32767);
+				newW = 1;				
+			}
 		}
 		else{
-			float th = 0.1;
-			if(abs(newF - oldF)<th || (!in_mask && !voxel.dyna_updated_)){
+			float th0 = 0.1, th1 = 2.0;
+			// if((abs(newF - oldF)>th0 && abs(newF - oldF)<=th1 && !in_mask)  || abs(newF - oldF)<=th0){
+			// 	//if smaller than threshod, we update normally no matter it is in mask or not, dynamic or not
+			// 	newF = oldW * oldF + newW * newF;
+			// 	newW = oldW + newW;
+			// 	newF /= newW;
+			// 	newW = MIN(newW, maxW);
+			// }
+
+			if(abs(newF - oldF)<th0 || (!in_mask && !voxel.dyna_updated_)){
 				//if smaller than threshod, we update normally no matter it is in mask or not, dynamic or not
 				newF = oldW * oldF + newW * newF;
 				newW = oldW + newW;
 				newF /= newW;
 				newW = MIN(newW, maxW);
 			}
-			else if(abs(newF - oldF)>=th && !in_mask && voxel.dyna_updated_){
+			else if(abs(newF - oldF)>=th0 && !in_mask && voxel.dyna_updated_){
 				//if larger than threshod, now not in mask but previsouly in mask, it means the object leaves, we reinitialize the voxel
 				newF = voxel.prev_sdf_; //TVoxel::valueToFloat(32767);
 				newW = voxel.prev_w_depth_;
 			}
-			else if(abs(newF - oldF)>=th && in_mask && !voxel.dyna_updated_){
+			else if(abs(newF - oldF)>=th0 && in_mask && !voxel.dyna_updated_){
 				//if larger than threshod, now in mask, previously not in mask, we store the current value as a static sdf value, which may be used to recover later.
 				voxel.prev_sdf_ = voxel.sdf;
 				voxel.prev_w_depth_ = voxel.w_depth;
@@ -118,7 +135,7 @@ _CPU_AND_GPU_CODE_ inline float computeUpdatedVoxelDepthInfo(DEVICEPTR(TVoxel) &
 
 	//voxel default use short
 
-	//else if(abs(newF - oldF)>=th && voxel.dyna_updated_) do nothing, just use new sdf
+	//else if(abs(newF - oldF)>=th0 && voxel.dyna_updated_) do nothing, just use new sdf
 		
 
 	//write back
